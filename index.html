@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        .progress-bar {
+            transition: width 0.3s ease-in-out;
+        }
+        .slide-in {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-900 to-purple-800 min-h-screen text-white">
+    <div class="container mx-auto px-4 py-12">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-12 slide-in">
+                <div class="flex justify-center mb-4">
+                    <div class="bg-white/20 p-4 rounded-full floating">
+                        <i class="fas fa-download text-4xl"></i>
+                    </div>
+                </div>
+                <h1 class="text-4xl font-bold mb-2">YouTube Video Downloader</h1>
+                <p class="text-indigo-200">Download videos in your preferred format and quality</p>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 mb-8 slide-in" style="animation-delay: 0.2s;">
+                <div class="mb-6">
+                    <label class="block text-indigo-100 mb-2 font-medium">YouTube Video URL</label>
+                    <div class="flex">
+                        <input type="text" id="videoUrl" placeholder="https://www.youtube.com/watch?v=..." 
+                            class="flex-1 bg-white/20 border border-white/30 rounded-l-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-indigo-200">
+                        <button id="fetchInfoBtn" class="bg-purple-600 hover:bg-purple-700 px-6 rounded-r-lg font-medium transition-all duration-200">
+                            <span id="fetchBtnText">Fetch</span>
+                            <i id="fetchSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                        </button>
+                    </div>
+                    <p id="urlError" class="text-red-300 text-sm mt-1 hidden"></p>
+                </div>
+
+                <div id="videoInfo" class="hidden opacity-0 transition-opacity duration-300 ease-in-out">
+                    <div class="mb-6 flex flex-col md:flex-row gap-6">
+                        <div class="md:w-1/3">
+                            <div class="bg-white/20 rounded-lg overflow-hidden">
+                                <img id="thumbnail" src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/08413606-db6d-410f-90ed-67ddb673dd83.png" alt="YouTube video thumbnail placeholder" class="w-full h-auto">
+                            </div>
+                        </div>
+                        <div class="md:w-2/3">
+                            <h2 id="videoTitle" class="text-xl font-bold mb-2">Video Title</h2>
+                            <p id="videoDuration" class="text-indigo-200 text-sm mb-4">Duration: 00:00</p>
+                            <div class="flex items-center space-x-2 mb-4">
+                                <i class="fas fa-eye"></i>
+                                <span id="videoViews" class="text-sm"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-indigo-100 mb-2 font-medium">Format</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <input type="radio" name="format" id="videoFormat" value="video" checked class="mr-2">
+                                    <label for="videoFormat">Video + Audio (MP4)</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="radio" name="format" id="audioFormat" value="audio" class="mr-2">
+                                    <label for="audioFormat">Audio Only (MP3)</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-indigo-100 mb-2 font-medium">Quality</label>
+                                <select id="qualitySelect" class="bg-white/20 border border-white/30 rounded-lg px-4 py-2 w-full text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <!-- Options will be dynamically loaded -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6 hidden" id="downloadProgressContainer">
+                        <div class="flex justify-between mb-1">
+                            <span id="progressText" class="text-sm font-medium">Preparing download...</span>
+                            <span id="progressPercent" class="text-sm">0%</span>
+                        </div>
+                        <div class="w-full bg-white/20 rounded-full h-2.5">
+                            <div id="progressBar" class="progress-bar bg-purple-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center">
+                        <button id="downloadBtn" class="bg-green-600 hover:bg-green-700 px-8 py-3 rounded-lg font-medium transition-all duration-200 flex items-center">
+                            <span id="downloadBtnText">Download</span>
+                            <i id="downloadSpinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="downloadComplete" class="hidden bg-green-500/10 border border-green-500/50 rounded-xl p-6 mb-8 text-center">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle text-green-500 text-5xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">Download Complete!</h3>
+                <p class="mb-4">Your file has been downloaded successfully.</p>
+                <a id="downloadLink" href="#" class="inline-block bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-medium transition-all duration-200">
+                    <i class="fas fa-file-download mr-2"></i> Open File
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const videoUrlInput = document.getElementById('videoUrl');
+        const fetchInfoBtn = document.getElementById('fetchInfoBtn');
+        const fetchBtnText = document.getElementById('fetchBtnText');
+        const fetchSpinner = document.getElementById('fetchSpinner');
+        const urlError = document.getElementById('urlError');
+        
+        const videoInfo = document.getElementById('videoInfo');
+        const thumbnail = document.getElementById('thumbnail');
+        const videoTitle = document.getElementById('videoTitle');
+        const videoDuration = document.getElementById('videoDuration');
+        const videoViews = document.getElementById('videoViews');
+        const qualitySelect = document.getElementById('qualitySelect');
+        
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadBtnText = document.getElementById('downloadBtnText');
+        const downloadSpinner = document.getElementById('downloadSpinner');
+        
+        const downloadProgressContainer = document.getElementById('downloadProgressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const progressPercent = document.getElementById('progressPercent');
+        
+        const downloadComplete = document.getElementById('downloadComplete');
+        const downloadLink = document.getElementById('downloadLink');
+
+        let currentDownloadId = null;
+        let progressInterval = null;
+
+        // Base URL for your Flask backend
+        const API_BASE_URL = window.location.origin; // Assumes Flask is served from the same origin
+
+        function updateDownloadProgress(progress) {
+            progressBar.style.width = `${progress}%`;
+            progressPercent.textContent = `${Math.round(progress)}%`;
+            
+            if (progress < 100) {
+                progressText.textContent = progress < 20 ? "Preparing download..." : 
+                                          progress < 60 ? "Downloading video..." : 
+                                          "Finishing up...";
+            }
+        }
+
+        async function pollDownloadStatus() {
+            if (!currentDownloadId) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/download_status/${currentDownloadId}`);
+                const data = await response.json();
+
+                if (data.status === 'completed') {
+                    clearInterval(progressInterval);
+                    updateDownloadProgress(100);
+                    downloadLink.href = `${API_BASE_URL}/downloads/${data.filename}`;
+                    downloadComplete.classList.remove('hidden');
+                    videoInfo.classList.add('opacity-0');
+                    setTimeout(() => {
+                        videoInfo.classList.add('hidden');
+                    }, 300);
+                    resetDownloadButton();
+                } else if (data.status === 'failed') {
+                    clearInterval(progressInterval);
+                    progressText.textContent = `Download failed: ${data.error || 'Unknown error'}`;
+                    progressBar.style.backgroundColor = "rgb(239 68 68)"; // Red color for error
+                    resetDownloadButton();
+                } else {
+                    updateDownloadProgress(data.progress);
+                }
+            } catch (error) {
+                console.error("Error polling download status:", error);
+                clearInterval(progressInterval);
+                progressText.textContent = "Error checking download status.";
+                progressBar.style.backgroundColor = "rgb(239 68 68)";
+                resetDownloadButton();
+            }
+        }
+
+        function resetDownloadButton() {
+            downloadBtnText.textContent = "Download";
+            downloadSpinner.classList.add('hidden');
+            downloadBtn.disabled = false;
+            currentDownloadId = null;
+        }
+        
+        // Event Listeners
+        fetchInfoBtn.addEventListener('click', async () => {
+            const url = videoUrlInput.value.trim();
+            
+            // Basic URL validation
+            if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
+                urlError.textContent = "Please enter a valid YouTube URL";
+                urlError.classList.remove('hidden');
+                return;
+            }
+            
+            urlError.classList.add('hidden');
+            fetchBtnText.textContent = "Fetching...";
+            fetchSpinner.classList.remove('hidden');
+            fetchInfoBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/fetch_info`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+                const videoData = await response.json();
+                
+                if (videoData.success) {
+                    // Update UI with video info
+                    thumbnail.src = videoData.thumbnail;
+                    thumbnail.alt = `Thumbnail for video: ${videoData.title}`;
+                    videoTitle.textContent = videoData.title;
+                    videoDuration.textContent = `Duration: ${videoData.duration}`;
+                    videoViews.textContent = videoData.views;
+
+                    // Populate quality options
+                    qualitySelect.innerHTML = ''; // Clear existing options
+                    videoData.formats.forEach(format => {
+                        const option = document.createElement('option');
+                        option.value = format.replace('p', ''); // e.g., "1080p" -> "1080"
+                        option.textContent = format;
+                        if (format === "720p") { // Default to 720p if available
+                            option.selected = true;
+                        }
+                        qualitySelect.appendChild(option);
+                    });
+                    // If 720p wasn't in the list, select the first available
+                    if (qualitySelect.selectedIndex === -1 && qualitySelect.options.length > 0) {
+                        qualitySelect.selectedIndex = 0;
+                    }
+                    
+                    // Show video info section
+                    videoInfo.classList.remove('hidden');
+                    setTimeout(() => {
+                        videoInfo.classList.remove('opacity-0');
+                    }, 10);
+                    
+                    // Reset download section
+                    downloadProgressContainer.classList.add('hidden');
+                    progressBar.style.width = "0%";
+                    progressPercent.textContent = "0%";
+                    progressText.textContent = "Preparing download...";
+                    downloadComplete.classList.add('hidden');
+                    progressBar.style.backgroundColor = ""; // Reset to default purple
+                } else {
+                    urlError.textContent = videoData.message || "Failed to fetch video info. Please try again.";
+                    urlError.classList.remove('hidden');
+                }
+            } catch (error) {
+                urlError.textContent = "Network error or server not reachable. Please try again.";
+                urlError.classList.remove('hidden');
+                console.error(error);
+            } finally {
+                fetchBtnText.textContent = "Fetch";
+                fetchSpinner.classList.add('hidden');
+                fetchInfoBtn.disabled = false;
+            }
+        });
+        
+        downloadBtn.addEventListener('click', async () => {
+            const url = videoUrlInput.value.trim();
+            const format = document.querySelector('input[name="format"]:checked').value;
+            const quality = qualitySelect.value;
+            
+            downloadBtn.disabled = true;
+            downloadBtnText.textContent = "Preparing...";
+            downloadSpinner.classList.remove('hidden');
+            downloadProgressContainer.classList.remove('hidden');
+            progressBar.style.backgroundColor = ""; // Reset to default purple
+
+            // Clear any previous polling interval
+            if (progressInterval) {
+                clearInterval(progressInterval);
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/download`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: url, format: format, quality: quality })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentDownloadId = result.download_id;
+                    // Start polling for download status
+                    progressInterval = setInterval(pollDownloadStatus, 1000); // Poll every 1 second
+                    updateDownloadProgress(0); // Initialize progress bar
+                } else {
+                    progressText.textContent = `Download failed: ${result.message || 'Unknown error'}`;
+                    progressBar.style.backgroundColor = "rgb(239 68 68)";
+                    resetDownloadButton();
+                }
+            } catch (error) {
+                progressText.textContent = "Network error or server not reachable. Please try again.";
+                progressBar.style.backgroundColor = "rgb(239 68 68)";
+                console.error(error);
+                resetDownloadButton();
+            }
+        });
+        
+        // Handle paste event for YouTube URLs
+        videoUrlInput.addEventListener('paste', (e) => {
+            setTimeout(() => {
+                const pastedText = videoUrlInput.value.trim();
+                if (pastedText.includes('youtube.com') || pastedText.includes('youtu.be')) {
+                    fetchInfoBtn.click();
+                }
+            }, 10);
+        });
+    </script>
+</body>
+</html>
+
