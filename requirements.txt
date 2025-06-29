@@ -1,5 +1,4 @@
 flask
 pytubefix
 flask_core
-threading
 uuid
