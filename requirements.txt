@@ -1,4 +1,4 @@
 flask
 pytubefix
-flask_cores
+flask_cors
 uuid
