@@ -15,9 +15,9 @@ Clean GUI using Tkinter
 
 Clone the repository and install dependencies:
 
-'''git clone https://github.com/rajputaman-hup/Youtube_Downloader.git
+git clone https://github.com/rajputaman-hup/Youtube_Downloader.git
 cd Youtube_Downloader
-pip install -r requirements.txt'''
+pip install -r requirements.txt
 
 # Usage
 
